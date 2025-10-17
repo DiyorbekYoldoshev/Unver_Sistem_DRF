@@ -176,31 +176,42 @@ Subject	name, code, credit	Department
 Schedule	subject, teacher, group, day, start_time, end_time	Subject + Teacher + Group
 Grade	student, subject, score, exam_type	Student + Subject
 Attendance	student, subject, date, status	Student + Subject
-👤 2. accounts (foydalanuvchilar bazasi)
 
+
+_________________________________________________________________________________________________________________________
+👤 2. accounts (foydalanuvchilar bazasi)
 Bu app barcha foydalanuvchilarni (Admin, Teacher, Student, Employee) yagona User modeli orqali boshqaradi.
 
 Model	Maydonlar	Aloqalar
 User	username, email, password, role (choices: admin, teacher, student, employee), is_active, date_joined	—
 Profile	user, first_name, last_name, phone, gender, birth_date, address, image	User
-
 role orqali foydalanuvchi turi aniqlanadi. Har biri o‘z appida qo‘shimcha ma’lumotlar bilan kengaytiriladi.
 
+
+_________________________________________________________________________________________________________________________
 🧑‍🏫 3. teachers (o‘qituvchilar ma’lumotlari)
 Model	Maydonlar	Aloqalar
 Teacher	user (OneToOne), department, position, specialization, degree	User + Department
 TeacherSchedule	teacher, subject, group, day, start_time, end_time	Teacher + Subject + Group
 TeacherActivity	teacher, description, date	Teacher
+
+
+_________________________________________________________________________________________________________________________
 🎓 4. students (talabalar ma’lumotlari)
 Model	Maydonlar	Aloqalar
 Student	user (OneToOne), student_id, group, enrollment_year, status	User + Group
 StudentRecord	student, subject, grade, attendance	Student + Subject
 StudentComplaint	student, message, created_at	Student
+
+
+_________________________________________________________________________________________________________________________
 🧰 5. employees (universitet xodimlari)
 Model	Maydonlar	Aloqalar
 Employee	user (OneToOne), position, department, hire_date, salary	User + Department
 Task	employee, title, description, status, deadline	Employee
 Report	employee, report_text, created_at	Employee
+
+_________________________________________________________________________________________________________________________
 🧑‍💼 6. admin_panel (boshqaruv va ruxsat tizimi)
 Model	Maydonlar	Aloqalar
 Role	name, description	—
