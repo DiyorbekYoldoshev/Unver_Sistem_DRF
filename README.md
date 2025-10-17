@@ -169,13 +169,22 @@ ________________________________________________________________________________
 
 🏛 1. academic (asosiy o‘quv obyektlar)
 Model	Maydonlar	Aloqalar
+
+______________________________________________________
 Faculty	name, code	—
+______________________________________________________
 Department	name, code	Faculty
+______________________________________________________
 Group	name, year	Department
+______________________________________________________
 Subject	name, code, credit	Department
+______________________________________________________
 Schedule	subject, teacher, group, day, start_time, end_time	Subject + Teacher + Group
+______________________________________________________
 Grade	student, subject, score, exam_type	Student + Subject
+______________________________________________________
 Attendance	student, subject, date, status	Student + Subject
+______________________________________________________
 
 
 _________________________________________________________________________________________________________________________
@@ -183,40 +192,58 @@ ________________________________________________________________________________
 Bu app barcha foydalanuvchilarni (Admin, Teacher, Student, Employee) yagona User modeli orqali boshqaradi.
 
 Model	Maydonlar	Aloqalar
+______________________________________________________
 User	username, email, password, role (choices: admin, teacher, student, employee), is_active, date_joined	—
+______________________________________________________
 Profile	user, first_name, last_name, phone, gender, birth_date, address, image	User
+______________________________________________________
 role orqali foydalanuvchi turi aniqlanadi. Har biri o‘z appida qo‘shimcha ma’lumotlar bilan kengaytiriladi.
 
 
 _________________________________________________________________________________________________________________________
 🧑‍🏫 3. teachers (o‘qituvchilar ma’lumotlari)
 Model	Maydonlar	Aloqalar
+______________________________________________________
 Teacher	user (OneToOne), department, position, specialization, degree	User + Department
+______________________________________________________
 TeacherSchedule	teacher, subject, group, day, start_time, end_time	Teacher + Subject + Group
+______________________________________________________
 TeacherActivity	teacher, description, date	Teacher
 
 
 _________________________________________________________________________________________________________________________
 🎓 4. students (talabalar ma’lumotlari)
 Model	Maydonlar	Aloqalar
+______________________________________________________
 Student	user (OneToOne), student_id, group, enrollment_year, status	User + Group
+______________________________________________________
 StudentRecord	student, subject, grade, attendance	Student + Subject
+______________________________________________________
 StudentComplaint	student, message, created_at	Student
 
 
 _________________________________________________________________________________________________________________________
 🧰 5. employees (universitet xodimlari)
 Model	Maydonlar	Aloqalar
+______________________________________________________
 Employee	user (OneToOne), position, department, hire_date, salary	User + Department
+______________________________________________________
 Task	employee, title, description, status, deadline	Employee
+______________________________________________________
 Report	employee, report_text, created_at	Employee
 
 _________________________________________________________________________________________________________________________
 🧑‍💼 6. admin_panel (boshqaruv va ruxsat tizimi)
 Model	Maydonlar	Aloqalar
+______________________________________________________
 Role	name, description	—
+______________________________________________________
 Permission	code_name, description	—
+______________________________________________________
 RolePermission	role, permission	Role + Permission
+______________________________________________________
 UserRole	user, role	User + Role
+______________________________________________________
 Log	user, action, timestamp, ip_address	User
+______________________________________________________
 READMI
