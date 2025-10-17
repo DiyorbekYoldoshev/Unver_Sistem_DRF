@@ -46,7 +46,12 @@ INSTALLED_APPS = [
     'djoser',
 
     # Applar
-    'accounts'
+    'accounts',
+    'teacher',
+    'student',
+    'employees',
+    'admin_panel',
+    'core'
 ]
 AUTH_USER_MODEL = 'accounts.User'
 

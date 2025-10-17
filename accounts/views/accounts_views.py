@@ -5,10 +5,13 @@ from rest_framework import viewsets
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import filters
-from .models import *
-from .serializers import UserSerializer,ProfileSerializer
+from ..models import *
+from ..serializers import UserSerializer, ProfileSerializer
+
+
 class CustomPagination(PageNumberPagination):
     page_size = 10
+
 
 class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
@@ -30,3 +33,4 @@ class ProfileViewSet(viewsets.ModelViewSet):
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
     search_fields = ['user__username', 'first_name', 'last_name', 'phone', 'address']
     ordering_fields = ['id', 'first_name']
+

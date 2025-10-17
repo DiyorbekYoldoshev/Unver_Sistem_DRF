@@ -14,7 +14,7 @@ class Teacher(models.Model):
     department = models.ForeignKey(Department, on_delete=models.CASCADE)
     position = models.CharField(max_length=100)  # Masalan: "Professor", "Dotsent"
     specialization = models.CharField(max_length=150)  # Masalan: "Sun’iy intellekt", "Matematika"
-    degree = models.CharField(max_length=20, choices=DEGREE_CHOICES)
+    degree = models.CharField(max_length=20, choices=DEGREE_CHOICES,default='bachelor')
     hire_date = models.DateField(auto_now_add=True)
 
     def __str__(self):

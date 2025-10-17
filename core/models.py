@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.db import models
 from django.contrib.auth.models import User
 
@@ -51,7 +52,7 @@ class Schedule(models.Model):
         ('saturday', 'Shanba'),
     ]
     subject = models.ForeignKey(Subject, on_delete=models.CASCADE)
-    teacher = models.ForeignKey(User, on_delete=models.CASCADE, related_name='teacher_schedules')
+    teacher = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='teacher_schedules')
     group = models.ForeignKey(Group, on_delete=models.CASCADE, related_name='group_schedules')
     day = models.CharField(max_length=15, choices=DAYS_OF_WEEK)
     start_time = models.TimeField()

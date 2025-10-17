@@ -1,5 +1,5 @@
 from django.db import models
-from django.contrib.auth.models import User
+from django.conf import settings
 from core.models import Group, Subject
 
 
@@ -11,7 +11,7 @@ class Student(models.Model):
         ('on_leave', 'Akademik ta’tilda'),
     ]
 
-    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     student_id = models.CharField(max_length=20, unique=True)
     group = models.ForeignKey(Group, on_delete=models.CASCADE, related_name='students')
     enrollment_year = models.PositiveIntegerField()
