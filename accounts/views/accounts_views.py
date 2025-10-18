@@ -5,6 +5,7 @@ from rest_framework import viewsets
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import filters
+from ..filters import ProfileFilter, UserFilter
 from ..models import *
 from ..serializers import UserSerializer, ProfileSerializer
 
@@ -18,7 +19,7 @@ class UserViewSet(viewsets.ModelViewSet):
     serializer_class = UserSerializer
     permission_classes = [IsAuthenticated]
     pagination_class = CustomPagination
-
+    filterset_class = UserFilter
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
     search_fields = ['username', 'email', 'role']
     ordering_fields = ['id', 'username']
@@ -29,6 +30,7 @@ class ProfileViewSet(viewsets.ModelViewSet):
     serializer_class = ProfileSerializer
     permission_classes = [IsAuthenticated]
     pagination_class = CustomPagination
+    filterset_class = ProfileFilter
 
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
     search_fields = ['user__username', 'first_name', 'last_name', 'phone', 'address']
