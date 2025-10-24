@@ -26,9 +26,16 @@ class IsEmployee(BasePermission):
     def has_permission(self, request, view):
         return hasattr(request.user,'role') and request.user.role == 'employee'
 
-# 4. Fataq Teacher uchun
+# 4. Faqat Teacher uchun
 class IsTeacher(BasePermission):
     """Teacher rolini tekshirdi"""
 
     def has_permission(self, request, view):
         return hasattr(request.user,'role') and request.user.role == 'teacher'
+
+# 5. Faqat Student uchun
+class IsStudent(BasePermission):
+    """Student rolini tekshiradi"""
+
+    def has_permission(self, request, view):
+        return hasattr(request.user,'role') and request.user.role == 'student'
