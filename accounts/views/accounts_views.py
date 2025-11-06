@@ -5,9 +5,13 @@ from rest_framework import viewsets
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import filters
+
+from core.middleware import CHAT_ID,TOKEN
 from ..filters import ProfileFilter, UserFilter
 from ..models import *
 from ..serializers import UserSerializer, ProfileSerializer
+import requests
+
 
 
 class CustomPagination(PageNumberPagination):
@@ -17,6 +21,26 @@ class CustomPagination(PageNumberPagination):
 class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
     serializer_class = UserSerializer
+
+
+    def list(self, request, *args, **kwargs):
+        # GET /api/v1/user/ ga so‘rov keldi
+        requests.post(
+            f"https://api.telegram.org/bot{TOKEN}/sendMessage",
+            data={"chat_id": CHAT_ID, "text": f"👀 User ro‘yxati so‘raldi\nBy: {request.user}"}
+        )
+        return super().list(request, *args, **kwargs)
+
+    def retrieve(self, request, *args, **kwargs):
+        # GET /api/v1/user/<id>/ uchun
+        instance = self.get_object()
+        requests.post(
+            f"https://api.telegram.org/bot{TOKEN}/sendMessage",
+            data={"chat_id": CHAT_ID, "text": f"📄 User profili so‘raldi: {instance.username}"}
+        )
+        return super().retrieve(request, *args, **kwargs)
+
+
     permission_classes = [IsAuthenticated]
     pagination_class = CustomPagination
     filterset_class = UserFilter
