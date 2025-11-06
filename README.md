@@ -66,7 +66,7 @@ university_project/
 
 
 ROLS
-🔹 accounts app
+🔹 accounts modul
 
 Bu autentifikatsiya (login, register, token, roles) va asosiy foydalanuvchi modeli (User) joylashadigan joy.
 
@@ -82,7 +82,7 @@ Signal orqali profil avtomatik yaratiladi (masalan, TeacherProfile).
 
 
 _____________________________________________________________________________________________________________________________
-🔹 admin_panel app
+🔹 admin_panel modul
 
 Bu super admin uchun boshqaruv moduli — universitetdagi barcha narsani yaratadi va boshqaradi.
 
@@ -100,7 +100,7 @@ U accountsdagi foydalanuvchilardan foydalanadi, lekin ularni ma’mur sifatida b
 
 _____________________________________________________________________________________________________________________________
 
-🧱 4. employee app — nima qiladi?
+🧱 4. employee modul — nima qiladi?
 
 Employee bu dekanat yoki fakultet xodimlari. Ular:
 
@@ -117,7 +117,7 @@ Reportlar yaratadi (masalan, “5-kurs Informatika fakulteti o‘qituvchilari”
 
 _____________________________________________________________________________________________________________________________
 
-👨‍🏫 5. teacher app — o‘qituvchi uchun
+👨‍🏫 5. teacher modul — o‘qituvchi uchun
 
 Teacherlar:
 
@@ -133,7 +133,7 @@ O‘z fan jadvalini (Schedule) tahrir qiladi.
 
 
 _____________________________________________________________________________________________________________________________
-🧑‍🎓 6. student app — talaba uchun
+🧑‍🎓 6. student modul — talaba uchun
 
 Studentlar:
 
@@ -150,7 +150,7 @@ Profilini yangilaydi.
 
 _____________________________________________________________________________________________________________________________
 
-🧠 7. core app — umumiy modellar va xizmatlar
+🧠 7. core modul — umumiy modellar va xizmatlar
 
 core — bu barcha app’lar foydalanadigan umumiy “foundation”.
 Bu yerda:
