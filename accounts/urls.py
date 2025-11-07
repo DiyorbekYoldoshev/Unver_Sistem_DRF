@@ -5,7 +5,7 @@ from django.urls import path,include
 
 router = routers.DefaultRouter()
 router.register(r'user',UserViewSet)
-router.register(r'profile',ProfileViewSet)
+router.register(r'profile',ProfileViewSet,basename='profile')
 router.register(r'teacher',TeacherViewSet)
 router.register(r'teacher-activity',TeacherActivityViewSet)
 router.register(r'teacher-schedule',TeacherScheduleViewSet)
