@@ -20,7 +20,7 @@ class ProfileFilter(django_filters.FilterSet):
     address = django_filters.CharFilter(field_name='address', lookup_expr='icontains')
 
     class Meta:
-        model = Profile
+        model = User
         fields = ['user', 'first_name', 'last_name', 'phone', 'gender', 'address']
 
 
