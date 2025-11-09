@@ -9,7 +9,7 @@ class StudentSerializer(serializers.ModelSerializer):
 
 
 class StudentRecordSerializer(serializers.ModelSerializer):
-    avg_rating = serializers.FloatField(read_only=True,required=False)
+    average_rating = serializers.FloatField(read_only=True,required=False)
     class Meta:
         model = StudentRecord
         fields = "__all__"
