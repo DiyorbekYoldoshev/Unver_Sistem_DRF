@@ -40,7 +40,7 @@ schema_view = get_schema_view(
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    # path('grappelli/', include('grappelli.urls')),
+    path('grappelli/', include('grappelli.urls')),
     path('api/v1/', include('accounts.urls')),
     # path('employee/',include('employees.urls')),
 
