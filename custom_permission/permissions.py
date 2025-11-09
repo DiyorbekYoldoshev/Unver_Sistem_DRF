@@ -1,44 +1,34 @@
-from rest_framework.permissions import BasePermission, SAFE_METHODS
+from rest_framework.permissions import BasePermission,SAFE_METHODS
 
 
-# 1. Faqat admin (superuser yoki staff)
-class IsAdminUserOrReadOnly(BasePermission):
-
-    """Admin yozishi mumkin boshqalar o'qiy oladi"""
+class IsAdminOrEmployee(BasePermission):
 
     def has_permission(self, request, view):
+        if not request.user or request.user.is_authenticated:
+            return False
 
-        if request.method in SAFE_METHODS:
-            return True
-        return request.user and request.user.is_staff
+        if request.method == 'DELETE':
+            return request.user.role == 'admin'
+        return request.user.role in ['admin','employee']
 
-# 2. Faqat super admin (superuser=True)
+class AdminReadOnly(BasePermission):
 
-class IsSuperAdmin(BasePermission):
-
-    def has_permission(self, request, view):
-        return request.user and request.user.is_superuser
-
-
-# 3. Faqat Employee uchun
-class IsEmployee(BasePermission):
-    """Employee role tekshiradi"""
-    def has_permission(self, request, view):
-        return hasattr(request.user,'role') and request.user.role == 'employee'
-
-# 4. Faqat Teacher uchun
-class IsTeacher(BasePermission):
-    """Teacher rolini tekshirdi"""
+    """Allow authenticated users read-only access"""
 
     def has_permission(self, request, view):
-        return hasattr(request.user,'role') and request.user.role == 'teacher'
+        return (
+            request.user
+            and request.user.is_authenticated
+            and request.user.role == 'admin'
+            and request.methodin in SAFE_METHODS
+        )
 
-# 5. Faqat Student uchun
-class IsStudent(BasePermission):
-    """Student rolini tekshiradi"""
+class EmployeeReadOnly(BasePermission):
 
     def has_permission(self, request, view):
-        return hasattr(request.user,'role') and request.user.role == 'student'
-
-
-# 6.
+        return (
+            request.user
+            and request.user.is_authenticated
+            and request.user.role == 'employee'
+            and request.method in SAFE_METHODS
+        )
