@@ -6,7 +6,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework import filters
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
-
+from custom_permission.permissions import IsStudent,IsTeacher,IsSuperAdmin,IsEmployee,IsAdminUserOrReadOnly
 from core.middleware import CHAT_ID,TOKEN
 from ..filters import ProfileFilter, UserFilter
 from ..models import *
@@ -82,7 +82,7 @@ class UserViewSet(viewsets.ModelViewSet):
         return super().retrieve(request, *args, **kwargs)
 
 
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAdminUserOrReadOnly]
     pagination_class = CustomPagination
     filterset_class = UserFilter
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
@@ -93,7 +93,7 @@ class UserViewSet(viewsets.ModelViewSet):
 class ProfileViewSet(viewsets.ModelViewSet):
     queryset = User.objects.select_related('user').all()
     serializer_class = ProfileSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAdminUserOrReadOnly]
     pagination_class = CustomPagination
     filterset_class = ProfileFilter
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
