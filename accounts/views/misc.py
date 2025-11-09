@@ -1,193 +1,195 @@
 from django.db.models import Avg
-from rest_framework import viewsets
+from rest_framework import viewsets,filters
 from rest_framework.pagination import PageNumberPagination
-from rest_framework.response import Response
-
-from teacher.models import Teacher, TeacherActivity,TeacherSchedule
-from teacher.serializers import TeacherSerializer,TeacherActivitySerializer,TeacherScheduleSerializer
-from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.permissions import IsAuthenticated
-from rest_framework import filters
-from core.serializers import *
-from student.serializers import *
-from student.models import *
-from employees.models import *
-from employees.serializers import *
-from accounts.filters import *
+from rest_framework.response import Response
 from rest_framework.decorators import action
-from django.db import models
+from django_filters.rest_framework import DjangoFilterBackend
+
+
+from student.serializers import *
+from teacher.serializers import *
+from employees.serializers import *
+from core.serializers import *
+
+from custom_permission.permissions import *
 
 
 class CustomPagination(PageNumberPagination):
     page_size = 10
 
+# =====================================================================================
+# 🧑‍🏫 TEACHER VIEWS
+# =====================================================================================
 
-# Teacher
 class TeacherViewSet(viewsets.ModelViewSet):
-    queryset = Teacher.objects.all()
-    serializer_class = TeacherSerializer
-    permission_classes = [IsAuthenticated]
+    queryset = Teacher.objects.all().order_by('hire_date')
     pagination_class = CustomPagination
-
+    serializer_class = TeacherSerializer
+    permission_classes = [IsTeacher|IsAdminUserOrReadOnly]
     filter_backends = [DjangoFilterBackend,filters.SearchFilter,filters.OrderingFilter]
     search_fields = ['department','position','specialization','degree']
-    ordering_fields = ['id','user']
+    ordering_fields = ['id','user__username']
+
+    def get_queryset(self):
+        user = self.request.user
+        if hasattr(user,'role') and user.role == 'teacher':
+            return Teacher.objects.filter(user=user)
+        return super().get_queryset()
 
 class TeacherActivityViewSet(viewsets.ModelViewSet):
-    queryset = TeacherActivity.objects.all()
+    queryset = TeacherActivity.objects.all().order_by('-id')
     serializer_class = TeacherActivitySerializer
     pagination_class = CustomPagination
-    permission_classes = [IsAuthenticated]
-
+    permission_classes = [IsTeacher|IsAdminUserOrReadOnly]
     filter_backends = [DjangoFilterBackend,filters.SearchFilter,filters.OrderingFilter]
-    search_fields = ['teacher','subject','room']
-    ordering_fields = ['id','teacher']
+    search_fields = ['teacher__user__username','subject__name','room']
+    ordering_fields = ['id','teacher__user__username']
+
 
 class TeacherScheduleViewSet(viewsets.ModelViewSet):
-    queryset = TeacherSchedule.objects.all()
+    queryset = TeacherSchedule.objects.all().order_by('-id')
     serializer_class = TeacherScheduleSerializer
     pagination_class = CustomPagination
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsTeacher|IsAdminUserOrReadOnly]
+    filter_backends = [DjangoFilterBackend,filters.OrderingFilter,filters.SearchFilter]
+    search_fields = ['title','description','day']
+    ordering_fields = ['id','teacher__user__username']
 
-    filter_backends = [DjangoFilterBackend,filters.SearchFilter,filters.OrderingFilter]
-    search_fields = ['title','description']
 
+# =====================================================================================
+# 🧱 CORE VIEWS
+# =====================================================================================
 
-# CORE
 class FacultyViewSet(viewsets.ModelViewSet):
-    queryset = Faculty.objects.all()
+    queryset = Faculty.objects.all().order_by('name')
     serializer_class = FacultySerializer
-    permission_classes = [IsAuthenticated]
-
+    pagination_class = CustomPagination
+    permission_classes = [IsAdminUserOrReadOnly]
 
 class DepartmentViewSet(viewsets.ModelViewSet):
-    queryset = Department.objects.all()
+    queryset = Department.objects.all().order_by('name')
     serializer_class = DepartmentSerializer
-    permission_classes = [IsAuthenticated]
-
-
+    pagination_class = CustomPagination
+    permission_classes = [IsAdminUserOrReadOnly]
 
 class GroupViewSet(viewsets.ModelViewSet):
-    queryset = Group.objects.all()
+    queryset = Group.objects.all().order_by('name')
     serializer_class = GroupSerializer
-    permission_classes = [IsAuthenticated]
-
-
+    pagination_class = CustomPagination
+    permission_classes = [IsTeacher|IsStudent|IsAdminUserOrReadOnly]
 
 class SubjectViewSet(viewsets.ModelViewSet):
-    queryset = Subject.objects.all()
+    queryset = Subject.objects.all().order_by('name')
     serializer_class = SubjectSerializer
-    permission_classes = [IsAuthenticated]
-
+    permission_classes = [IsTeacher | IsStudent | IsAdminUserOrReadOnly]
 
 class ScheduleViewSet(viewsets.ModelViewSet):
-    queryset = Schedule.objects.all()
+    queryset = Schedule.objects.all().order_by('-id')
     serializer_class = ScheduleSerializer
     permission_classes = [IsAuthenticated]
 
 
 class GradeViewSet(viewsets.ModelViewSet):
-    queryset = Grade.objects.all()
+    queryset = Grade.objects.all().order_by("-created_at")
     serializer_class = GradeSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsTeacher | IsStudent | IsAdminUserOrReadOnly]
 
 
 class AttendanceViewSet(viewsets.ModelViewSet):
-    queryset = Attendance.objects.all()
+    queryset = Attendance.objects.all().order_by("-date")
     serializer_class = AttendanceSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsTeacher | IsStudent | IsAdminUserOrReadOnly]
 
 
-# Student
+# =====================================================================================
+# 🎓 STUDENT VIEWS
+# =====================================================================================
+
 
 class StudentViewSet(viewsets.ModelViewSet):
-    queryset = Student.objects.all()
-    serializer_class = StudentSerializer
-    permission_classes = [IsAuthenticated]
+    queryset = Student.objects.all().order_by('-student_id')
+    serializer_class = StudentRecordSerializer
+    permission_classes = [IsStudent|IsTeacher|IsAdminUserOrReadOnly]
 
+    def get_queryset(self):
+        user = self.request.user
+        if hasattr(user,'role') and user.role == 'student':
+            return Student.objects.filter(user=user)
+        return super().get_queryset()
 
 class StudentRecordViewSet(viewsets.ModelViewSet):
-    queryset = StudentRecord.objects.all()
+    queryset = StudentRecord.objects.all().order_by('-id')
     serializer_class = StudentRecordSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsTeacher|IsAdminUserOrReadOnly]
+    pagination_class = CustomPagination
 
-    @action(detail=False, methods=['get'])
-    def top_grade_student(self, request):
-        """Eng yuqori o‘rtacha bahoga ega 3 ta talabani chiqaradi."""
-        top_students = (
+    @action(detail=False,methods=['get'])
+    def top_grade_student(self,request):
+        top_student = (
             Student.objects
-            .annotate(avg_grade=Avg('records__grade'))
-            .order_by('-avg_grade')[:3]
+            .annotate(avg_grade=Avg('average_rating'))
+            .order_by('-id')[:3]
         )
+        data = [
+            {
+                'student_id':s.student_id,
+                'full_name':f"{getattr(s.user.profile,'first_name','')} {getattr(s.user.profile,'last_name','')}".strip(),
+                'group':getattr(s.group,'name',None),
+                'average_rating':s.avg_grade,
+                'status':s.status
 
-        data = []
-        for s in top_students:
-            profile = getattr(s.user, 'profile', None)
-            full_name = (
-                f"{profile.first_name} {profile.last_name}"
-                if profile else s.user.username
-            )
-            data.append({
-                "student_id": s.student_id,
-                "student_name": full_name,
-                "group": s.group.name if s.group else None,
-                "average_grade": s.avg_grade,
-                "status": s.status,
-            })
-
-        return Response({"Eng yuqori ball olgan talabalar": data})
+            }
+            for s in top_student
+        ]
+        return Response({'result':data})
 
     @action(detail=True,methods=['get'])
     def average_rating(self,request,pk=None):
-        """Talabaning o‘rtacha bahosini hisoblaydi."""
         student_record = self.get_object()
         student = student_record.student
-        records = student.records.all()
-
-        if not records.exists():
-            return Response({'average_rating':'Sizda hali baholar yo\'q'})
-        avg_rating = records.aggregate(models.Avg('grade'))['grade__avg']
-
-        profile = getattr(student.user,'profile',None)
-        full_name = (
-            f"{profile.first_name}  {profile.last_name}"
-            if profile else student.user.username
+        avg_rating = student.records.aggregate(Avg('grade'))['grade_avg']
+        return Response(
+            {
+                'student_id':student.student_id,
+                'full_name':f"{getattr(student.user.profile,'first_name','')}  {getattr(student.user.profile,'last_name','')}".strip(),
+                'group':getattr(student.group,'name',None),
+                'average_rating':avg_rating or 'Hali baholar mavjud emas'
+            }
         )
-        return Response({
-            'student_id':student.student_id,
-            'student_name':full_name,
-            'group':student.group.name if student.group else None,
-            'average_rating':avg_rating
-        })
 
 class StudentComplaintViewSet(viewsets.ModelViewSet):
-    queryset = StudentComplaint.objects.all()
+    queryset = StudentComplaint.objects.all().order_by('-id')
     serializer_class = StudentComplaintSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsStudent | IsAdminUserOrReadOnly]
 
-# Employee
 
+# =====================================================================================
+# 👨‍💼 EMPLOYEE VIEWS
+# =====================================================================================
 
 class EmployeeViewSet(viewsets.ModelViewSet):
-    queryset = Employee.objects.all()
+    queryset = Employee.objects.all().order_by('-id')
     serializer_class = EmployeeSerializer
-    permission_classes = [IsAuthenticated]
-    filter_backends = [DjangoFilterBackend,filters.SearchFilter,filters.OrderingFilter]
-    filterset_class = EmployeeFilter
-    search_fields = ['user','position','department']
+    permission_classes = [IsEmployee | IsAdminUserOrReadOnly]
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
+    search_fields = ["user__username", "position", "department__name"]
+    ordering_fields = ["id", "user__username"]
+
 
 class TaskViewSet(viewsets.ModelViewSet):
-    queryset = Task.objects.all()
+    queryset = Task.objects.all().order_by('deadline')
     serializer_class = TaskSerializer
-    permission_classes = [IsAuthenticated]
-    filter_backends = [DjangoFilterBackend,filters.SearchFilter,filters.OrderingFilter]
-    filterset_class = TaskFilter
-    search_fields = ['employee','title','description','status']
+    permission_classes = [IsEmployee | IsAdminUserOrReadOnly]
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
+    search_fields = ["employee__user__username", "title", "description", "status"]
+    ordering_fields = ["id", "employee__user__username"]
+
 
 class ReportViewSet(viewsets.ModelViewSet):
-    queryset = Report.objects.all()
+    queryset = Report.objects.all().order_by('-created_at')
     serializer_class = ReportSerializer
-    permission_classes = [IsAuthenticated]
-    filter_backends = [DjangoFilterBackend,filters.SearchFilter,filters.OrderingFilter]
-    filterset_class = ReportFilter
-    search_fields = ['employee','report_text']
+    permission_classes = [IsEmployee | IsAdminUserOrReadOnly]
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
+    search_fields = ["employee__user__username", "report_text"]
+    ordering_fields = ["id", "employee__user__username"]
