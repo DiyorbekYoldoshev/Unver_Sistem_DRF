@@ -5,27 +5,29 @@ from django.db import models
 from django.contrib.auth.base_user import BaseUserManager
 
 class UserManager(BaseUserManager):
+    use_in_migrations = True
 
-    def create_user(self,username,password, **extra_fields):
+    def create_user(self, username, password=None, **extra_fields):
         if not username:
             raise ValueError("The username must be set")
-        extra_fields.setdefault('is_staff',False)
-        extra_fields.setdefault('is_superuser',False)
-        user = self.model(username=username,**extra_fields)
-        user.set_password(password)
+        extra_fields.setdefault('is_staff', False)
+        extra_fields.setdefault('is_superuser', False)
+        user = self.model(username=username, **extra_fields)
+        if password:
+            user.set_password(password)
+        else:
+            user.set_unusable_password()
         user.save(using=self._db)
         return user
 
-    def create_superuser(self,username,password,**extra_fields):
-        extra_fields.setdefault('is_staff',True)
-        extra_fields.setdefault('is_superuser',True)
-        extra_fields.setdefault('is_active',True)
-
+    def create_superuser(self, username, password=None, **extra_fields):
+        extra_fields.setdefault('is_staff', True)
+        extra_fields.setdefault('is_superuser', True)
+        extra_fields.setdefault('is_active', True)
         if extra_fields.get("is_staff") is not True:
             raise ValueError("Superuser must have is_staff=True.")
         if extra_fields.get("is_superuser") is not True:
             raise ValueError("Superuser must have is_superuser=True.")
-
         return self.create_user(username, password, **extra_fields)
 
 
@@ -36,11 +38,17 @@ phone_regex = RegexValidator(
 
 
 class User(AbstractBaseUser, PermissionsMixin):
+
+    ADMIN = 'admin'
+    EMPLOYEE = 'employee'
+    TEACHER = 'teacher'
+    STUDENT = 'student'
+
     ROLE_CHOICES = [
-        ('admin', 'Admin'),
-        ('employee', 'Employee'),
-        ('teacher', 'Teacher'),
-        ('student', 'Student'),
+        (ADMIN, 'Admin'),
+        (EMPLOYEE, 'Employee'),
+        (TEACHER, 'Teacher'),
+        (STUDENT, 'Student'),
     ]
 
     username = models.CharField(max_length=150, unique=True)
