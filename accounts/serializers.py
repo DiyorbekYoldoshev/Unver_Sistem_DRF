@@ -17,14 +17,22 @@ class PermissionSerializer(serializers.ModelSerializer):
 class UserSerializer(serializers.ModelSerializer):
     groups = GroupSerializer(many=True, read_only=True)
     user_permissions = PermissionSerializer(many=True, read_only=True)
+    avatar = serializers.SerializerMethodField()
     class Meta:
         model = User
         fields = "__all__"
         ref_name = "CustomUserSerializer"
 
+    def get_avatar(self,obj):
+        if obj.avatar and hasattr(obj.avatar, 'url'):
+            return obj.avatar.url
+        return None
+
+
 class ProfileSerializer(serializers.ModelSerializer):
+    avatar = serializers.ImageField(required=False)
 
     class Meta:
         model = User
-        fields = ['id','first_name','last_name','phone','address']
+        fields = ['id','first_name','last_name','phone','address','avatar']
         ref_name = "CustomProfileSerializer"

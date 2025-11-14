@@ -44,7 +44,6 @@ INSTALLED_APPS = [
 	'drf_yasg',
     'django_filters',
     'rest_framework_simplejwt',
-    'djoser',
 
     # Applar
     'accounts',
@@ -131,6 +130,9 @@ USE_I18N = True
 USE_TZ = True
 
 REST_FRAMEWORK = {
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.IsAuthenticated',
+    ],
     'DEFAULT_PAGINATION_CLASS': 'core.pagination.CustomPagination',
     'PAGE_SIZE': 10,
     'DEFAULT_AUTHENTICATION_CLASSES': (
