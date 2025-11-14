@@ -5,10 +5,11 @@ from employees.models import *
 
 class UserFilter(django_filters.FilterSet):
     role = django_filters.CharFilter(field_name='role',lookup_expr='icontains')
+    username = django_filters.CharFilter(field_name='username',lookup_expr='icontains')
 
     class Meta:
         model = User
-        fields = ['role']
+        fields = ['role','username']
 
 class ProfileFilter(django_filters.FilterSet):
 
