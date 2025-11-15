@@ -9,8 +9,8 @@ from django_filters.rest_framework import DjangoFilterBackend
 
 
 from custom_permission.permissions import (
-    IsAdminOrEmployee, IsTeacher, IsStudent, IsEmployee, IsAdmin, IsAdminOrTeacher,IsAdminOrStudent,
-    IsAdminOrEmployeeOrTeacher,IsSelfOrAdmin
+    IsTeacher, IsStudent, IsEmployee, IsAdmin,
+    IsAdminOrEmployeeOrTeacher
 )
 from core.models import (
     Faculty, Department, Group, Subject, Schedule, Grade, Attendance
@@ -133,7 +133,7 @@ class FacultyViewSet(BaseViewSet):
 
         return self.queryset.filter(id=user.id)
 
-    permission_classes = [IsAdminOrEmployee]
+    permission_classes = [IsAdminOrEmployeeOrTeacher|IsStudent]
     search_fields = ['name']
     ordering_fields = ['id', 'name']
 
@@ -156,7 +156,7 @@ class DepartmentViewSet(BaseViewSet):
 
         return self.queryset.filter(id=user.id)
 
-    permission_classes = [IsAdminOrEmployee]
+    permission_classes = [IsAdmin|IsEmployee]
     search_fields = ['name', 'faculty__name']
     ordering_fields = ['id', 'name']
 
@@ -202,7 +202,7 @@ class SubjectViewSet(BaseViewSet):
 
         return self.queryset.filter(id=user.id)
 
-    permission_classes = [IsTeacher | IsStudent | IsAdminOrEmployee]
+    permission_classes = [IsTeacher | IsStudent | IsAdmin | IsEmployee]
     search_fields = ['name', 'department__name']
     ordering_fields = ['id', 'name']
 
@@ -248,7 +248,7 @@ class GradeViewSet(BaseViewSet):
 
         return self.queryset.filter(id=user.id)
 
-    permission_classes = [IsTeacher | IsStudent | IsAdminOrEmployee]
+    permission_classes = [IsStudent | IsAdminOrEmployeeOrTeacher]
     search_fields = ['student__student_id', 'subject__name']
     ordering_fields = ['id', 'created_at']
 
@@ -272,7 +272,7 @@ class AttendanceViewSet(BaseViewSet):
 
 
 
-    permission_classes = [IsAdminOrEmployee]
+    permission_classes = [IsEmployee|IsAdmin]
     search_fields = ['student__student_id', 'subject__name']
     ordering_fields = ['id', 'date']
 
@@ -280,7 +280,7 @@ class AttendanceViewSet(BaseViewSet):
 class StudentViewSet(BaseViewSet):
     queryset = Student.objects.select_related('user', 'group').all().order_by('-student_id')
     serializer_class = StudentSerializer
-    permission_classes = [IsStudent | IsTeacher | IsAdminOrEmployee]
+    permission_classes = [IsStudent | IsAdminOrEmployeeOrTeacher]
     search_fields = ['student_id', 'user__username', 'group__name']
     ordering_fields = ['id', 'student_id']
 
@@ -338,7 +338,7 @@ class StudentRecordViewSet(BaseViewSet):
         return self.queryset.none()
 
 
-    permission_classes = [IsTeacher | IsAdminOrEmployee | IsStudent]
+    permission_classes = [IsAdminOrEmployeeOrTeacher | IsStudent]
     search_fields = ['student__student_id', 'subject__name']
     ordering_fields = ['id', 'student__student_id']
 
@@ -396,7 +396,7 @@ class StudentComplaintViewSet(BaseViewSet):
 
         return self.queryset.none()
 
-    permission_classes = [IsStudent | IsAdminOrEmployee]
+    permission_classes = [IsStudent | IsAdmin | IsEmployee]
 
 # --------------------- Employee ------------------------------------------
 class EmployeeViewSet(BaseViewSet):
@@ -419,7 +419,7 @@ class EmployeeViewSet(BaseViewSet):
 
         return self.queryset.none()
 
-    permission_classes = [IsAdminOrEmployee]
+    permission_classes = [IsEmployee|IsAdmin]
     search_fields = ['user__username', 'position', 'department__name']
     ordering_fields = ['id', 'user__username']
 
@@ -450,7 +450,7 @@ class TaskViewSet(BaseViewSet):
 
         return self.queryset.none()
 
-    permission_classes = [IsAdminOrEmployee]
+    permission_classes = [IsAdmin|IsStudent]
     search_fields = ['employee__user__username', 'title', 'description', 'status']
     ordering_fields = ['id', 'deadline']
 
@@ -475,6 +475,6 @@ class ReportViewSet(BaseViewSet):
 
         return self.queryset.none()
 
-    permission_classes = [IsAdminOrEmployee]
+    permission_classes = [IsAdmin|IsEmployee]
     search_fields = ['employee__user__username', 'report_text']
     ordering_fields = ['id', 'created_at']
