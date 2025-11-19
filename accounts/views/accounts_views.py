@@ -1,22 +1,24 @@
 from django.db.models import Q
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import viewsets, status, filters
-from rest_framework.decorators import action
+from rest_framework.decorators import action, permission_classes
 from rest_framework.exceptions import NotAuthenticated, PermissionDenied
+from rest_framework.mixins import RetrieveModelMixin, UpdateModelMixin
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
+from rest_framework.viewsets import GenericViewSet
 from rest_framework_simplejwt.tokens import RefreshToken
 from custom_permission.permissions import (
     IsStudent, IsTeacher, IsEmployee, IsAdminOrEmployeeOrTeacher, IsAdmin
 )
+from rest_framework.throttling import UserRateThrottle
 from core.middleware import CHAT_ID, TOKEN
 from ..filters import ProfileFilter, UserFilter
 from ..models import User
 from ..serializers import UserSerializer, ProfileSerializer
 import requests
-
 
 # ================================
 # 📄 PAGINATION
@@ -31,9 +33,33 @@ class CustomPagination(PageNumberPagination):
 # 👤 USER VIEWSET
 # ================================
 class UserViewSet(viewsets.ModelViewSet):
-    queryset = User.objects.all().order_by('-id')
-    serializer_class = UserSerializer
 
+    # Asosiy
+
+    # 1 - queryset
+    queryset = User.objects.all().order_by('-id')
+    # 2 - serializer
+    serializer_class = UserSerializer
+    # 3 - permission
+    permission_classes = [IsAdmin]
+    # 4 - pagination
+    pagination_class = CustomPagination
+    # 5 - parses
+    parser_classes = [MultiPartParser,FormParser]
+
+    # Search va Filter
+
+    # 1 - filterset_class
+    filterset_class = UserFilter
+    # 2 - filter_backend
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
+    # 3 - search_fields
+    search_fields = ['username','first_name','last_name','email','role']
+    # 4 - ordering_fields
+    ordering_fields = ['id','username','role']
+    # 5 - throttle_classes
+    throttle_classes = [UserRateThrottle]
+    # get_permission va get_queryset
     def get_permissions(self):
         if self.action in ['create']:
             return [IsAdmin()]
@@ -52,6 +78,9 @@ class UserViewSet(viewsets.ModelViewSet):
             return self.queryset.none()
 
         user = self.request.user
+        if user.role != 'admin':
+            raise NotAuthenticated("Sizda bu so'rov uchun ruxsat yo'q")
+
         if not user or not user.is_authenticated:
             raise NotAuthenticated("Avval tizimga kiring")
 
@@ -59,19 +88,7 @@ class UserViewSet(viewsets.ModelViewSet):
         if user.is_superuser or user.is_staff or user.role == 'admin':
             return self.queryset.all()
 
-        if user.role == 'teacher':
-            return User.objects.filter(role='student')
-
-        # Oddiy foydalanuvchi – faqat o‘zini ko‘radi
-        return self.queryset.filter(id=user.id)
-
-
-    permission_classes = [IsAdmin]
-    pagination_class = CustomPagination
-    filterset_class = UserFilter
-    filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
-    search_fields = ['username', 'email', 'role']
-    ordering_fields = ['id', 'username', 'created_at']
+        return None
 
     def create(self, request, *args, **kwargs):
 
@@ -102,6 +119,9 @@ class UserViewSet(viewsets.ModelViewSet):
     def me(self, request):
         """Foydalanuvchining shaxsiy profilini ko‘rish yoki tahrirlash"""
         user = request.user
+        if not user.is_superuser and user.role != 'admin':
+            raise NotAuthenticated("Siz admin emassiz")
+
         if request.method == 'PUT':
             serializer = self.get_serializer(user, data=request.data, partial=True)
             serializer.is_valid(raise_exception=True)
@@ -139,125 +159,68 @@ class UserViewSet(viewsets.ModelViewSet):
 # ================================
 
 
-# class ProfileViewSet(viewsets.ModelViewSet):
-#     queryset = User.objects.all().order_by('-id')
-#     serializer_class = ProfileSerializer
-#
-#     # Faqat o'qish va taxrirlash
-#     http_method_names = ["get", "put", "patch"]
-#
-#     parser_classes = [MultiPartParser, FormParser]
-#     permission_classes = [IsAdminOrEmployeeOrTeacher | IsStudent]
-#
-#     pagination_class = CustomPagination
-#     filterset_class = ProfileFilter
-#     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
-#
-#     search_fields = ['username', 'first_name', 'last_name', 'email']
-#     ordering_fields = ['id', 'first_name', 'last_name']
-#
-#     def get_queryset(self):
-#         user = self.request.user
-#
-#         if not user.is_authenticated:
-#             raise NotAuthenticated("Avval tizimga kiring")
-#
-#         if user.is_superuser:
-#             return User.objects.select_related("teacher", "student", "employee")
-#
-#         return User.objects.filter(id=user.id)
-#
-#     # CREATE NI BLOKLASH
-#     def create(self, request, *args, **kwargs):
-#         return Response(
-#             {"detail": "Profil yaratib bo‘lmaydi"},
-#             status=status.HTTP_405_METHOD_NOT_ALLOWED
-#         )
-#
-#     # DELETE NI BLOKLASH
-#     def destroy(self, request, *args, **kwargs):
-#         return Response(
-#             {"detail": "Profil o‘chirib bo‘lmaydi"},
-#             status=status.HTTP_405_METHOD_NOT_ALLOWED
-#         )
-#
-#     @action(detail=False, methods=['get'], permission_classes=[IsAuthenticated])
-#     def my_profile(self, request):
-#         serializer = UserSerializer(request.user)
-#         return Response(serializer.data)
-#
-#     @action(detail=False, methods=['put', 'patch'], permission_classes=[IsAuthenticated])
-#     def update_profile(self, request):
-#         serializer = ProfileSerializer(
-#             request.user,
-#             data=request.data,
-#             partial=True
-#         )
-#         if serializer.is_valid():
-#             serializer.save()
-#             return Response(serializer.data)
-#
-#         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-#
-#
 
-class ProfileViewSet(viewsets.ModelViewSet):
-
+class ProfileViewSet(GenericViewSet):
+    # Asosiy
+    # 1 - queryset
     queryset = User.objects.all()
+    # 2 - serializer_class
     serializer_class = ProfileSerializer
+    # 3 - permission_classes
+    permission_classes = [IsAuthenticated]
+    # 4 - pagination_class
     pagination_class = CustomPagination
-
-    filterset_class = ProfileFilter
-    filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
+    # 5 - parser_classes
     parser_classes = [MultiPartParser, FormParser]
 
-    search_fields = ['username', 'first_name', 'last_name', 'email']
-    ordering_fields = ['id', 'first_name', 'last_name']
-
-    def get_permissions(self):
-        """
-        Admin → create/update/delete mumkin
-        Boshqa userlar → faqat o‘z profiliga update
-        """
-        # Admin uchun cheksiz huquq
-        if self.request.user.is_superuser:
-            return [IsAdmin()]
-
-        # create/delete → faqat admin; boshqalar uchun taqiqlanadi
-        if self.action in ['create', 'destroy']:
-            return [IsAdmin()]
-
-        # oddiy user → faqat authenticated
-        return [IsAuthenticated()]
-
+    # Filter va qidiruvlar
+    # 6 - filterset_class (filter.py fayldagi)
+    filterset_class = ProfileFilter
+    # 7 - filter_backends
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
+    # 8 - search_fields
+    search_fields = ['first_name', 'last_name', 'email', 'address']
+    # 9 - ordering_fields
+    ordering_fields = ['id', 'username', 'birth_date']
+    # Boshqa
+    # 10 - throttle_classes
+    throttle_classes = [UserRateThrottle]
+    # get_queryset, get_permission
     def get_queryset(self):
-        """
-        Admin → Barcha userlar
-        Oddiy user → faqat o‘z profilini ko‘radi
-        """
+
         user = self.request.user
 
-        if not user or not user.is_authenticated:
+        if getattr(self, 'swagger_fake_view', False):
+            return self.queryset.none()
+
+        if not user.is_authenticated:
             raise NotAuthenticated("Avval tizimga kiring")
 
-        if user.is_superuser:
-            return User.objects.select_related('employee', 'teacher', 'student').all()
+        if user.is_superuser and user.role == 'admin':
+            return self.queryset.all()
 
-        return User.objects.filter(id=user.id)
+        if user.role == 'teacher':
+            return self.queryset.filter(role='student')
 
-    def perform_destroy(self, instance):
-        """
-        O'chirish -> faqat admin
-        """
-        user = self.request.user
-        if not user.is_superuser:
-            raise PermissionDenied("Faqat admin o‘chira oladi")
-        instance.delete()
+        return self.queryset.filter(id=user.id)
+
+    def get_permissions(self):
+
+        return [IsAuthenticated()]
+
 
     @action(detail=False, methods=['get'], permission_classes=[IsAuthenticated])
     def my_profile(self, request):
-        """
-        Foydalanuvchining shaxsiy profilini olish
-        """
-        serializer = UserSerializer(request.user)
+        serializer = self.get_serializer(request.user)
+        return Response(serializer.data)
+
+    @action(detail=False, methods=['put'], permission_classes=[IsAuthenticated])
+    def update_profile(self, request):
+        allowed_fields = ['username','first_name','last_name','phone','address','password','avatar']
+
+        data = {field: request.data[field] for field in allowed_fields if field in request.data}
+
+        serializer = ProfileSerializer(request.user, data=data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
         return Response(serializer.data)
