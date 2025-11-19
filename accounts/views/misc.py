@@ -90,7 +90,7 @@ class TeacherActivityViewSet(BaseViewSet):
     ordering_fields = ['id', 'teacher__user__username']
 
 class TeacherScheduleViewSet(BaseViewSet):
-    queryset = TeacherSchedule.objects.select_related('teacher__user', 'subject', 'group').all().order_by('-id')
+    queryset = TeacherSchedule.objects.select_related('teacher__user', 'subject','group').all().order_by('-id')
     serializer_class = TeacherScheduleSerializer
 
     def get_queryset(self):
@@ -286,6 +286,9 @@ class StudentViewSet(BaseViewSet):
 
 
     def get_queryset(self):
+
+        if getattr(self, 'swagger_fake_view', False):
+            return self.queryset.none()
 
         user = self.request.user
         if not user or not user.is_authenticated:
