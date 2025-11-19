@@ -63,7 +63,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'core.middleware.TelegramRequestMiddleware',
+    # 'core.middleware.TelegramRequestMiddleware',
 ]
 
 ROOT_URLCONF = 'main.urls'
@@ -143,7 +143,7 @@ REST_FRAMEWORK = {
         'rest_framework.throttling.UserRateThrottle',
     ],
     'DEFAULT_THROTTLE_RATES': {
-        'user': '1000/day',
+        'user': '10/min',
     },
 }
 LOGGING = {

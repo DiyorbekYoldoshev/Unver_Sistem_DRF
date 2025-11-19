@@ -31,8 +31,32 @@ class UserSerializer(serializers.ModelSerializer):
 
 class ProfileSerializer(serializers.ModelSerializer):
     avatar = serializers.ImageField(required=False)
+    password = serializers.CharField(required=False, write_only=True)
 
     class Meta:
         model = User
-        fields = ['id','first_name','last_name','phone','address','avatar']
+        fields = [
+            'id', 'username', 'first_name', 'last_name',
+            'phone', 'address', 'avatar', 'password'
+        ]
         ref_name = "CustomProfileSerializer"
+
+    def update(self, instance, validated_data):
+        password = validated_data.pop("password", None)
+
+        for key, value in validated_data.items():
+            setattr(instance, key, value)
+
+        if password:
+            instance.set_password(password)
+
+        instance.save()
+        return instance
+
+    def validate(self, attrs):
+        blocked = ['is_staff','is_superuser','role']
+        for filed in blocked:
+            if filed in attrs:
+                raise serializers.ValidationError({filed: "Bu maydonni o'zgartirish mumkin emas"})
+        return attrs
+

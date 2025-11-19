@@ -1,6 +1,6 @@
 from django.db import models
 from accounts.models import User
-from core.models import Department, Subject
+from core.models import Department, Subject, Group
 
 
 class Teacher(models.Model):
@@ -24,6 +24,7 @@ class Teacher(models.Model):
 class TeacherSchedule(models.Model):
     teacher = models.ForeignKey(Teacher, on_delete=models.CASCADE)
     subject = models.ForeignKey(Subject, on_delete=models.CASCADE)
+    group = models.ForeignKey(Group, on_delete=models.CASCADE, blank=True, null=True)
     day_of_week = models.CharField(
         max_length=10,
         choices=[
