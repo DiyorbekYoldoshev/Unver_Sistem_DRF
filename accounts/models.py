@@ -1,9 +1,10 @@
+# 1 - Importlar
 from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin
 from django.core.validators import RegexValidator
 from django.db import models
-
 from django.contrib.auth.base_user import BaseUserManager
 
+# 2 - Custom Managers (modelga qarab bazi hollarda yoziladi
 class UserManager(BaseUserManager):
     use_in_migrations = True
 
@@ -21,6 +22,7 @@ class UserManager(BaseUserManager):
         return user
 
     def create_superuser(self, username, password=None, **extra_fields):
+        extra_fields.setdefault('role','admin')
         extra_fields.setdefault('is_staff', True)
         extra_fields.setdefault('is_superuser', True)
         extra_fields.setdefault('is_active', True)
@@ -36,9 +38,9 @@ phone_regex = RegexValidator(
     message="Telefon raqamni shu tartibda kiriting: +998911234567"
 )
 
-
+# 3 - Model Class (Fields,Relations)
 class User(AbstractBaseUser, PermissionsMixin):
-
+    # 4 - Global constants / Choices (fielsga qarab)
     ADMIN = 'admin'
     EMPLOYEE = 'employee'
     TEACHER = 'teacher'
@@ -50,7 +52,7 @@ class User(AbstractBaseUser, PermissionsMixin):
         (TEACHER, 'Teacher'),
         (STUDENT, 'Student'),
     ]
-
+    # 5 - Fieldlar
     username = models.CharField(max_length=150, unique=True)
     role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='student')
     first_name = models.CharField(max_length=100, blank=True)
@@ -64,10 +66,18 @@ class User(AbstractBaseUser, PermissionsMixin):
     is_staff = models.BooleanField(default=False)
     date_joined = models.DateTimeField(auto_now_add=True)
 
+    # 6 - Managers biriktirish (objects = ...)
     objects = UserManager()
+
 
     USERNAME_FIELD = 'username'
     REQUIRED_FIELDS = []
 
+    # 7 - str()
     def __str__(self):
         return f"{self.username} ({self.role})"
+
+# Shartga qarab
+# Custom model methods
+# save() override (agar bo‘lsa)
+# signals bo‘lsa — models.py ichida emas, alohida signals.py da bo‘ladi
