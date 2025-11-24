@@ -3,7 +3,6 @@ from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import viewsets, status, filters
 from rest_framework.decorators import action, permission_classes
 from rest_framework.exceptions import NotAuthenticated, PermissionDenied
-from rest_framework.mixins import RetrieveModelMixin, UpdateModelMixin
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.permissions import IsAuthenticated
@@ -68,7 +67,7 @@ class UserViewSet(viewsets.ModelViewSet):
             return [IsAdmin()]
 
         if self.action in ['retrieve']:
-            return [IsTeacher(),IsEmployee]
+            return [IsTeacher(), IsEmployee()]
 
         return [IsAuthenticated()]
 

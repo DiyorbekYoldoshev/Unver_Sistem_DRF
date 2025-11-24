@@ -17,7 +17,7 @@ class CustomCreationForm(forms.ModelForm):
 
 class CustomUserAdmin(UserAdmin):
     model = User
-    list_display = ('username', 'role', 'is_staff', 'is_active','avatar')
+    list_display = ('id','username', 'role', 'is_staff', 'is_active','avatar')
     list_filter = ('role', 'is_staff', 'is_active')
     fieldsets = (
         (None, {'fields': ('username', 'password')}),
