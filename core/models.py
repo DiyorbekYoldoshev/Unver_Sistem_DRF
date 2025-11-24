@@ -1,6 +1,10 @@
 from django.conf import settings
 from django.db import models
 from django.contrib.auth.models import User
+from time import daylight
+from datetime import date
+
+from django.utils import timezone
 
 
 # 🏫 Fakultet, Bo‘lim, Guruh
@@ -93,3 +97,15 @@ class Attendance(models.Model):
 
     def __str__(self):
         return f"{self.student} - {self.date} ({self.status})"
+
+    def is_active(self):
+        return self.date == date.today()
+
+    class Meta:
+
+        constraints = [
+            models.UniqueConstraint(
+                fields=['date','student','status'],
+                name='unique_date_student_status'
+            )
+        ]
