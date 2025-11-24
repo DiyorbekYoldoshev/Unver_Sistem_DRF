@@ -25,7 +25,12 @@ class RolePermission(models.Model):
     permission = models.ForeignKey(Permission,on_delete=models.CASCADE,related_name='roles')
 
     class Meta:
-        unique_together = ('role','permission')
+        constraints = [
+            models.UniqueConstraint(
+                fields=['role','permission'],
+                name='unique_role_permission'
+            )
+        ]
 
     def __str__(self):
         return f"{self.role.name} - {self.permission.code_name}"
@@ -37,7 +42,12 @@ class UserRole(models.Model):
     assigned_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        unique_together = ('user', 'role')
+        constraints = [
+            models.UniqueConstraint(
+                fields=['user','role'],
+                name='unique_user_role'
+            )
+        ]
 
     def __str__(self):
         return f"{self.user.username} → {self.role.name}"
@@ -48,6 +58,28 @@ class Log(models.Model):
     action = models.CharField(max_length=255)
     timestamp = models.DateTimeField(auto_now_add=True)
     ip_address = models.GenericIPAddressField(null=True, blank=True)
+    meta = models.JSONField(null=True, blank=True)
+
+    class Meta:
+        ordering = ['-timestamp']
 
     def __str__(self):
-        return f"{self.user} - {self.action} ({self.timestamp})"
+        user_repr = self.user.username if self.user else "Anon"
+        return f"{user_repr} - {self.action} ({self.timestamp.isoformat()})"
+
+
+class AcademicYear(models.Model):
+    year = models.CharField(max_length=20, null=True,blank=True)
+    is_active = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.year
+
+class SystemSetting(models.Model):
+    key = models.CharField(max_length=150,unique=True)
+    value = models.JSONField()
+    description = models.TextField(null=True,blank=True)
+
+    def __str__(self):
+        return self.key

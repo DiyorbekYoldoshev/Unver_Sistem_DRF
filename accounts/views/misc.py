@@ -83,7 +83,7 @@ class TeacherActivityViewSet(BaseViewSet):
         if user.is_superuser or user.is_staff or user.role == 'admin':
             return self.queryset.all()
 
-        return self.queryset.filter(id=user.id)
+        return self.queryset.filter(teacher__user=user)
 
     permission_classes = [IsAdminOrEmployeeOrTeacher]
     search_fields = ['teacher__user__username', 'subject__name', 'room']
@@ -106,7 +106,7 @@ class TeacherScheduleViewSet(BaseViewSet):
         if user.is_superuser or user.is_staff or user.role == 'admin':
             return self.queryset.all()
 
-        return self.queryset.filter(id=user.id)
+        return self.queryset.filter(teacher__user=user)
 
 
     permission_classes = [IsAdminOrEmployeeOrTeacher]
@@ -133,7 +133,7 @@ class FacultyViewSet(BaseViewSet):
 
         return self.queryset.filter(id=user.id)
 
-    permission_classes = [IsAdminOrEmployeeOrTeacher|IsStudent]
+    permission_classes = [IsAdminOrEmployeeOrTeacher, IsStudent]
     search_fields = ['name']
     ordering_fields = ['id', 'name']
 
@@ -156,7 +156,7 @@ class DepartmentViewSet(BaseViewSet):
 
         return self.queryset.filter(id=user.id)
 
-    permission_classes = [IsAdmin|IsEmployee]
+    permission_classes = [IsAdmin, IsEmployee]
     search_fields = ['name', 'faculty__name']
     ordering_fields = ['id', 'name']
 
@@ -179,7 +179,7 @@ class GroupViewSet(BaseViewSet):
 
         return self.queryset.filter(id=user.id)
 
-    permission_classes = [IsAdminOrEmployeeOrTeacher|IsStudent]
+    permission_classes = [IsAdminOrEmployeeOrTeacher, IsStudent]
     search_fields = ['name', 'department__name']
     ordering_fields = ['id', 'name']
 
@@ -202,12 +202,12 @@ class SubjectViewSet(BaseViewSet):
 
         return self.queryset.filter(id=user.id)
 
-    permission_classes = [IsTeacher | IsStudent | IsAdmin | IsEmployee]
+    permission_classes = [IsTeacher, IsStudent, IsAdmin, IsEmployee]
     search_fields = ['name', 'department__name']
     ordering_fields = ['id', 'name']
 
 class ScheduleViewSet(BaseViewSet):
-    queryset = Schedule.objects.select_related('subject', 'teacher__user', 'group').all().order_by('-id')
+    queryset = Schedule.objects.prefetch_related('subject', 'teacher__user', 'group').all().order_by('-id')
     serializer_class = ScheduleSerializer
 
     def get_queryset(self):
@@ -225,7 +225,7 @@ class ScheduleViewSet(BaseViewSet):
 
         return self.queryset.filter(id=user.id)
 
-    permission_classes = [IsAdminOrEmployeeOrTeacher|IsStudent]
+    permission_classes = [IsAdminOrEmployeeOrTeacher, IsStudent]
     search_fields = ['subject__name', 'teacher__user__username', 'group__name', 'day']
     ordering_fields = ['id', 'day']
 
@@ -248,31 +248,46 @@ class GradeViewSet(BaseViewSet):
 
         return self.queryset.filter(id=user.id)
 
-    permission_classes = [IsStudent | IsAdminOrEmployeeOrTeacher]
+    permission_classes = [IsStudent, IsAdminOrEmployeeOrTeacher]
     search_fields = ['student__student_id', 'subject__name']
     ordering_fields = ['id', 'created_at']
 
 class AttendanceViewSet(BaseViewSet):
+
     queryset = Attendance.objects.select_related('student__user', 'subject').all().order_by('-date')
     serializer_class = AttendanceSerializer
+    permission_classes = [IsAdmin, IsEmployee, IsTeacher, IsStudent]
 
     def get_queryset(self):
-
         if getattr(self, 'swagger_fake_view', False):
-            return self.queryset.none()
+            return Attendance.objects.none()
 
         user = self.request.user
-        if not user or not user.is_authenticated:
-            raise NotAuthenticated('Avval tizimga kiring')
 
-        if user.is_superuser or user.is_staff or user.role == 'admin':
-            return self.queryset.all()
+        if not user.is_authenticated:
+            raise NotAuthenticated("Tizimga kiring")
 
-        return self.queryset.filter(user__id=user.id)
+        # ADMIN → hamma ma'lumot
+        if user.role == 'admin' or user.is_superuser:
+            return Attendance.objects.all()
 
+        # EMPLOYEE → hamma ma'lumot
+        if user.role == 'employee':
+            return Attendance.objects.all()
 
+        # TEACHER → faqat o‘z fanlaridagi studentlar
+        if user.role == 'teacher':
+            teacher = user.teacher
+            return Attendance.objects.filter(
+                subject__teacher=teacher
+            )
 
-    permission_classes = [IsEmployee|IsAdmin]
+        # STUDENT → faqat o‘zining attendance'i
+        if user.role == 'student':
+            return Attendance.objects.filter(student=user.student)
+
+        return Attendance.objects.none()
+
     search_fields = ['student__student_id', 'subject__name']
     ordering_fields = ['id', 'date']
 
@@ -280,7 +295,7 @@ class AttendanceViewSet(BaseViewSet):
 class StudentViewSet(BaseViewSet):
     queryset = Student.objects.select_related('user', 'group').all().order_by('-student_id')
     serializer_class = StudentSerializer
-    permission_classes = [IsStudent | IsAdminOrEmployeeOrTeacher]
+    permission_classes = [IsStudent, IsAdminOrEmployeeOrTeacher]
     search_fields = ['student_id', 'user__username', 'group__name']
     ordering_fields = ['id', 'student_id']
 
@@ -312,7 +327,6 @@ class StudentViewSet(BaseViewSet):
 
         raise PermissionDenied("Sizda ushbu so'rov uchun ruxsat yo'q")
 
-
 class StudentRecordViewSet(BaseViewSet):
     queryset = StudentRecord.objects.select_related('student__user', 'subject').all().order_by('-id')
     serializer_class = StudentRecordSerializer
@@ -341,7 +355,7 @@ class StudentRecordViewSet(BaseViewSet):
         return self.queryset.none()
 
 
-    permission_classes = [IsAdminOrEmployeeOrTeacher | IsStudent]
+    permission_classes = [IsAdminOrEmployeeOrTeacher, IsStudent]
     search_fields = ['student__student_id', 'subject__name']
     ordering_fields = ['id', 'student__student_id']
 
@@ -360,7 +374,7 @@ class StudentRecordViewSet(BaseViewSet):
         } for s in top_students]
         return Response({'results': data})
 
-    @action(detail=True, methods=['get'], permission_classes=[IsStudent | IsAdminOrEmployeeOrTeacher])
+    @action(detail=True, methods=['get'], permission_classes=[IsStudent, IsAdminOrEmployeeOrTeacher])
     def average_rating(self, request, pk=None):
         student_record = self.get_object()
         student = student_record.student
@@ -399,7 +413,7 @@ class StudentComplaintViewSet(BaseViewSet):
 
         return self.queryset.none()
 
-    permission_classes = [IsStudent | IsAdmin | IsEmployee]
+    permission_classes = [IsStudent, IsAdmin, IsEmployee]
 
 # --------------------- Employee ------------------------------------------
 class EmployeeViewSet(BaseViewSet):
@@ -422,7 +436,7 @@ class EmployeeViewSet(BaseViewSet):
 
         return self.queryset.none()
 
-    permission_classes = [IsEmployee|IsAdmin]
+    permission_classes = [IsEmployee, IsAdmin]
     search_fields = ['user__username', 'position', 'department__name']
     ordering_fields = ['id', 'user__username']
 
@@ -453,7 +467,7 @@ class TaskViewSet(BaseViewSet):
 
         return self.queryset.none()
 
-    permission_classes = [IsAdmin|IsStudent]
+    permission_classes = [IsAdmin, IsStudent]
     search_fields = ['employee__user__username', 'title', 'description', 'status']
     ordering_fields = ['id', 'deadline']
 
@@ -478,6 +492,6 @@ class ReportViewSet(BaseViewSet):
 
         return self.queryset.none()
 
-    permission_classes = [IsAdmin|IsEmployee]
+    permission_classes = [IsAdmin, IsEmployee]
     search_fields = ['employee__user__username', 'report_text']
     ordering_fields = ['id', 'created_at']
