@@ -1,5 +1,8 @@
 from rest_framework import serializers
+from yaml.serializer import SerializerError
+
 from .models import *
+from datetime import date
 
 class FacultySerializer(serializers.ModelSerializer):
     class Meta:
@@ -42,3 +45,9 @@ class AttendanceSerializer(serializers.ModelSerializer):
     class Meta:
         model = Attendance
         fields = "__all__"
+
+    def validate_date(self, value):
+        if value != date.today():
+            raise serializers.ValidationError("Davomad faqat bugungi kun uchun kiritilishi mumkin.")
+
+        return value
