@@ -43,6 +43,7 @@ urlpatterns = [
     path('grappelli/', include('grappelli.urls')),
     path('api/v1/', include('accounts.urls')),
     # path('employee/',include('employees.urls')),
+    path('api/v1/admin-panel/', include('admin_panel.urls')),
 
 
     path('api/v1/custom_auth/', include('djoser.urls')),
